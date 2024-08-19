@@ -47,20 +47,33 @@ async function loadAvailableProducts() {
     const availableProductList = document.getElementById('availableProductList');
     availableProductList.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos productos
 
+    // Crear un array para almacenar los productos disponibles
+    let availableProducts = [];
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       if (!data.sold) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${data.nombre}</td>
-          <td>${data.fechaIngreso}</td>
-          <td>${data.imei}</td>
-          <td>
-            <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${doc.id}')">Marcar como Vendido</button>
-          </td>
-        `;
-        availableProductList.appendChild(row);
+        // Agregar cada producto disponible al array
+        availableProducts.push({ id: doc.id, ...data });
       }
+    });
+
+    // Ordenar los productos disponibles por fecha de ingreso (más antiguo primero)
+    availableProducts.sort((a, b) => new Date(a.fechaIngreso) - new Date(b.fechaIngreso));
+
+    // Agregar los productos disponibles ordenados a la tabla
+    availableProducts.forEach((product) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product.nombre}</td>
+        <td>${product.fechaIngreso}</td>
+        <td>${product.imei}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${product.id}')">Marcar como Vendido</button>
+          <button class="btn btn-secondary btn-sm" onclick="copyImei(this, '${product.imei}')">Copiar IMEI</button>
+        </td>
+      `;
+      availableProductList.appendChild(row);
     });
   } catch (e) {
     console.error('Error al cargar productos disponibles: ', e);
@@ -75,20 +88,32 @@ async function loadSoldProducts() {
     const soldProductList = document.getElementById('soldProductList');
     soldProductList.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos productos
 
+    // Crear un array para almacenar los productos vendidos
+    let soldProducts = [];
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       if (data.sold) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${data.nombre}</td>
-          <td>${data.fechaIngreso}</td>
-          <td>${data.fechaVenta || 'No disponible'}</td>
-          <td>${data.precioVenta || 'No disponible'}</td>
-          <td>${data.comprador || 'No disponible'}</td>
-          <td>${data.imei}</td>
-        `;
-        soldProductList.appendChild(row);
+        // Agregar cada producto vendido al array
+        soldProducts.push({ id: doc.id, ...data });
       }
+    });
+
+    // Ordenar los productos vendidos por fecha de venta (más reciente primero)
+    soldProducts.sort((a, b) => new Date(b.fechaVenta) - new Date(a.fechaVenta));
+
+    // Agregar los productos vendidos ordenados a la tabla
+    soldProducts.forEach((product) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product.nombre}</td>
+        <td>${product.fechaIngreso}</td>
+        <td>${product.fechaVenta || 'No disponible'}</td>
+        <td>${product.precioVenta || 'No disponible'}</td>
+        <td>${product.comprador || 'No disponible'}</td>
+        <td>${product.imei}</td>
+      `;
+      soldProductList.appendChild(row);
     });
   } catch (e) {
     console.error('Error al cargar productos vendidos: ', e);
@@ -139,4 +164,21 @@ document.getElementById('markAsSoldForm').addEventListener('submit', async funct
     alert('Hubo un error al marcar el producto como vendido');
   }
 });
+
+// Función para copiar el IMEI al portapapeles y mostrar "Copiado" en el botón por 2 segundos
+window.copyImei = function(button, imei) {
+  const tempInput = document.createElement('input');
+  document.body.appendChild(tempInput);
+  tempInput.value = imei;
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+
+  const originalText = button.textContent;
+  button.textContent = 'Copiado';
+  setTimeout(() => {
+    button.textContent = originalText;
+  }, 2000);
+}
+
 setInterval(loadAvailableProducts, 2000);
