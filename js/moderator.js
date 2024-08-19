@@ -181,4 +181,5 @@ window.copyImei = function(button, imei) {
   }, 2000);
 }
 
-setInterval(loadAvailableProducts, 2000);
+setInterval(loadAvailableProducts, 300000);
+

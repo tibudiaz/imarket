@@ -37,6 +37,7 @@ document.getElementById('productForm').addEventListener('submit', async function
 
   const productName = document.getElementById('productName').value;
   const entryDate = document.getElementById('entryDate').value;
+  const productProveedor = document.getElementById ('productProveedor').value;
   const purchasePrice = document.getElementById('purchasePrice').value;
   const imei = document.getElementById('imei').value;
 
@@ -44,6 +45,7 @@ document.getElementById('productForm').addEventListener('submit', async function
     await addDoc(collection(db, "productos"), {
       nombre: productName,
       fechaIngreso: entryDate,
+      proveedor: productProveedor,
       precioCompra: purchasePrice,
       imei: imei,
       sold: false
@@ -58,6 +60,37 @@ document.getElementById('productForm').addEventListener('submit', async function
     alert('Hubo un error al cargar el producto');
   }
 });
+document.getElementById('scanBarcodeButton').addEventListener('click', function(event) {
+  event.preventDefault(); // Prevenir el comportamiento predeterminado del botón
+
+  const html5QrCode = new Html5Qrcode("reader");
+  html5QrCode.start(
+      { facingMode: "environment" }, // Usa la cámara trasera
+      {
+          fps: 10,    // Cuadros por segundo para procesar las imágenes
+          qrbox: 250  // Tamaño del cuadro de escaneo
+      },
+      (decodedText, decodedResult) => {
+          // Manejar el código escaneado
+          document.getElementById('imei').value = decodedText;
+          html5QrCode.stop().then(ignore => {
+              // Cámara detenida
+              console.log("Cámara detenida");
+          }).catch(err => {
+              // Error al detener la cámara
+              console.error(err);
+          });
+      },
+      (errorMessage) => {
+          // Manejar errores durante el escaneo
+          console.warn(`Error: ${errorMessage}`);
+      }
+  ).catch(err => {
+      // Manejar errores al iniciar la cámara
+      console.error(err);
+  });
+});
+
 
 // Alternar entre pestañas
 document.getElementById('loadTabButton').addEventListener('click', function() {
@@ -247,5 +280,5 @@ document.getElementById('saveEditButton').addEventListener('click', async functi
     alert('Hubo un error al actualizar el producto');
   }
 });
-setInterval(loadProducts, 2000);
-setInterval(loadSoldProducts, 2000);
+setInterval(loadProducts, 300000);
+setInterval(loadSoldProducts, 300000);
