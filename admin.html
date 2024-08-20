@@ -51,6 +51,10 @@
                     <input type="date" id="entryDate" class="form-control" required>
                 </div>
                 <div class="mb-3">
+                  <label for="productProveedor" class="form-label">Proveedor:</label>
+                  <input type="text" id="productProveedor" class="form-control" required>
+              </div>
+                <div class="mb-3">
                     <label for="purchasePrice" class="form-label">Precio de Compra:</label>
                     <input type="number" id="purchasePrice" class="form-control" required>
                 </div>
@@ -70,6 +74,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Fecha de Ingreso</th>
+                        <th>Proveedor</th>
                         <th>Precio de Compra</th>
                         <th>IMEI</th>
                         <th>Acciones</th>
@@ -88,6 +93,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Fecha de Ingreso</th>
+                        <th>Proveedor</th>
                         <th>Precio de Compra</th>
                         <th>Precio de Venta</th>
                         <th>Fecha de Venta</th>
@@ -104,38 +110,37 @@
 
 <!-- Modal para editar producto -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+  <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="editProductForm">
-            <input type="hidden" id="editProductId">
-            <div class="mb-3">
-              <label for="editProductName" class="form-label">Nombre de Producto</label>
-              <input type="text" class="form-control" id="editProductName" required>
-            </div>
-            <div class="mb-3">
-              <label for="editEntryDate" class="form-label">Fecha de Ingreso</label>
-              <input type="date" class="form-control" id="editEntryDate" required>
-            </div>
-            <div class="mb-3">
-              <label for="editPurchasePrice" class="form-label">Precio de Compra</label>
-              <input type="number" class="form-control" id="editPurchasePrice" required>
-            </div>
-            <div class="mb-3">
-              <label for="editImei" class="form-label">IMEI</label>
-              <input type="text" class="form-control" id="editImei" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-          </form>
-        </div>
+          <div class="modal-header">
+              <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <form id="editProductForm">
+                  <input type="hidden" id="editProductId">
+                  <div class="mb-3">
+                      <label for="editProductName" class="form-label">Nombre de Producto</label>
+                      <input type="text" class="form-control" id="editProductName" required>
+                  </div>
+                  <div class="mb-3">
+                      <label for="editEntryDate" class="form-label">Fecha de Ingreso</label>
+                      <input type="date" class="form-control" id="editEntryDate" required>
+                  </div>
+                  <div class="mb-3">
+                      <label for="editPurchasePrice" class="form-label">Precio de Compra</label>
+                      <input type="number" class="form-control" id="editPurchasePrice" step="0.01" required>
+                  </div>
+                  <div class="mb-3">
+                      <label for="editImei" class="form-label">IMEI</label>
+                      <input type="text" class="form-control" id="editImei" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+              </form>
+          </div>
       </div>
-    </div>
   </div>
-  
+</div>
 
 
     <!-- Bootstrap JS and dependencies -->
