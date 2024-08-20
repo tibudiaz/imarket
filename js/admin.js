@@ -37,7 +37,7 @@ document.getElementById('productForm').addEventListener('submit', async function
 
   const productName = document.getElementById('productName').value;
   const entryDate = document.getElementById('entryDate').value;
-  const productProveedor = document.getElementById ('productProveedor').value;
+  const productProveedor = document.getElementById('productProveedor').value;
   const purchasePrice = document.getElementById('purchasePrice').value;
   const imei = document.getElementById('imei').value;
 
@@ -212,7 +212,7 @@ window.markAsSold = async function(productId) {
       alert("Debe ingresar tanto el precio de venta como el nombre del comprador.");
     }
   } catch (e) {
-    console.error('Error al marcar producto como vendido: ', e);
+    console.error('Error al marcar el producto como vendido: ', e);
     alert('Hubo un error al marcar el producto como vendido');
   }
 }
@@ -231,7 +231,7 @@ window.copyIMEI = function(imei, button) {
   });
 }
 
-// Editar un producto
+// Editar un producto usando el modal
 window.editProduct = async function(productId) {
   try {
     const productRef = doc(db, "productos", productId);
@@ -239,25 +239,53 @@ window.editProduct = async function(productId) {
 
     if (productSnap.exists()) {
       const productData = productSnap.data();
-      const newProductName = prompt("Editar nombre del producto:", productData.nombre);
-      const newEntryDate = prompt("Editar fecha de ingreso del producto:", productData.fechaIngreso);
-      const newPurchasePrice = prompt("Editar precio de compra del producto:", productData.precioCompra);
 
-      if (newProductName && newEntryDate && newPurchasePrice) {
-        await updateDoc(productRef, {
-          nombre: newProductName,
-          fechaIngreso: newEntryDate,
-          precioCompra: newPurchasePrice
-        });
-        loadProducts(); // Actualizar la lista de productos disponibles
-      } else {
-        alert("Debe completar todos los campos para actualizar el producto.");
-      }
+      // Mostrar datos del producto en el modal
+      document.getElementById('editProductId').value = productId;
+      document.getElementById('editProductName').value = productData.nombre;
+      document.getElementById('editEntryDate').value = productData.fechaIngreso;
+      document.getElementById('editPurchasePrice').value = productData.precioCompra;
+      document.getElementById('editImei').value = productData.imei;
+
+      // Mostrar el modal
+      const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+      editProductModal.show();
     } else {
       alert("Producto no encontrado.");
     }
   } catch (e) {
     console.error('Error al editar producto: ', e);
-    alert('Hubo un error al editar el producto');
+    alert('Hubo un error al abrir el modal de edición');
   }
 }
+
+// Guardar los cambios realizados en el modal
+document.getElementById('editProductForm').addEventListener('submit', async function(event) {
+  event.preventDefault();
+
+  const productId = document.getElementById('editProductId').value;
+  const newProductName = document.getElementById('editProductName').value;
+  const newEntryDate = document.getElementById('editEntryDate').value;
+  const newPurchasePrice = document.getElementById('editPurchasePrice').value;
+  const newImei = document.getElementById('editImei').value;
+
+  try {
+    const productRef = doc(db, "productos", productId);
+    await updateDoc(productRef, {
+      nombre: newProductName,
+      fechaIngreso: newEntryDate,
+      precioCompra: newPurchasePrice,
+      imei: newImei
+    });
+
+    // Ocultar el modal y actualizar las listas
+    const editProductModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+    editProductModal.hide();
+
+    loadProducts(); // Actualizar la lista de productos disponibles
+    loadSoldProducts(); // Actualizar la lista de productos vendidos
+  } catch (e) {
+    console.error('Error al guardar cambios: ', e);
+    alert('Hubo un error al guardar los cambios');
+  }
+});
