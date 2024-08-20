@@ -217,76 +217,47 @@ window.markAsSold = async function(productId) {
   }
 }
 
-// Editar un producto
-window.editProduct = function(productId) {
-  const productRef = doc(db, "productos", productId);
-
-  getDoc(productRef).then((docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      document.getElementById('editProductName').value = data.nombre;
-      document.getElementById('editEntryDate').value = data.fechaIngreso;
-      document.getElementById('editPurchasePrice').value = data.precioCompra;
-      document.getElementById('editImei').value = data.imei;
-      document.getElementById('editProductId').value = productId;
-
-      const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
-      editProductModal.show();
-    } else {
-      alert('No se encontró el producto.');
-    }
-  }).catch((error) => {
-    console.error('Error al obtener el producto: ', error);
-    alert('Hubo un error al obtener el producto');
+// Copiar IMEI al portapapeles
+window.copyIMEI = function(imei, button) {
+  navigator.clipboard.writeText(imei).then(() => {
+    const originalText = button.innerText;
+    button.innerText = 'Copiado';
+    setTimeout(() => {
+      button.innerText = originalText;
+    }, 2000);
+  }).catch((e) => {
+    console.error('Error al copiar IMEI: ', e);
+    alert('Hubo un error al copiar el IMEI');
   });
 }
 
-// Manejar el formulario de edición del producto
-document.getElementById('editProductForm').addEventListener('submit', async function(event) {
-  event.preventDefault(); // Prevenir la recarga de la página
-
-  const productId = document.getElementById('editProductId').value;
-  const updatedName = document.getElementById('editProductName').value;
-  const updatedEntryDate = document.getElementById('editEntryDate').value;
-  const updatedPurchasePrice = document.getElementById('editPurchasePrice').value;
-  const updatedImei = document.getElementById('editImei').value;
-
+// Editar un producto
+window.editProduct = async function(productId) {
   try {
     const productRef = doc(db, "productos", productId);
-    await updateDoc(productRef, {
-      nombre: updatedName,
-      fechaIngreso: updatedEntryDate,
-      precioCompra: updatedPurchasePrice,
-      imei: updatedImei
-    });
+    const productSnap = await getDoc(productRef);
 
-    alert('Producto actualizado exitosamente');
-    loadProducts(); // Actualizar la lista de productos disponibles
-    const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
-    editProductModal.hide(); // Ocultar el modal
+    if (productSnap.exists()) {
+      const productData = productSnap.data();
+      const newProductName = prompt("Editar nombre del producto:", productData.nombre);
+      const newEntryDate = prompt("Editar fecha de ingreso del producto:", productData.fechaIngreso);
+      const newPurchasePrice = prompt("Editar precio de compra del producto:", productData.precioCompra);
+
+      if (newProductName && newEntryDate && newPurchasePrice) {
+        await updateDoc(productRef, {
+          nombre: newProductName,
+          fechaIngreso: newEntryDate,
+          precioCompra: newPurchasePrice
+        });
+        loadProducts(); // Actualizar la lista de productos disponibles
+      } else {
+        alert("Debe completar todos los campos para actualizar el producto.");
+      }
+    } else {
+      alert("Producto no encontrado.");
+    }
   } catch (e) {
-    console.error('Error al actualizar producto: ', e);
-    alert('Hubo un error al actualizar el producto');
+    console.error('Error al editar producto: ', e);
+    alert('Hubo un error al editar el producto');
   }
-});
-
-// Función para copiar IMEI al portapapeles
-window.copyIMEI = function(imei, button) {
-  navigator.clipboard.writeText(imei).then(() => {
-    // Cambiar el texto del botón a "Copiado" por 2 segundos
-    const originalText = button.textContent;
-    button.textContent = 'Copiado';
-    setTimeout(() => {
-      button.textContent = originalText;
-    }, 2000);
-  }).catch((error) => {
-    console.error('Error al copiar IMEI: ', error);
-    alert('Hubo un error al copiar el IMEI');
-  });
-};
-
-// Actualizar la lista de productos y productos vendidos cada 5 minutos
-setInterval(loadProducts, 300000);
-setInterval(loadSoldProducts, 300000);
-
-
+}
