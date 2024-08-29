@@ -86,6 +86,7 @@ async function loadAvailableProducts() {
           <button class="btn btn-warning btn-sm" onclick="senarProducto('${product.id}')">Señar</button>
           <button class="btn btn-secondary btn-sm" onclick="copyImei(this, '${product.imei}')">Copiar IMEI</button>
         </td>
+        <td>${product.anotacion || ''}</td>
       `;
       availableProductList.appendChild(row);
     });
@@ -216,6 +217,7 @@ async function loadSeñados() {
           <button class="btn btn-warning btn-sm" onclick="cancelarSeña('${data.id}')">Cancelar Seña</button>
           <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
         </td>
+        <td>${data.anotacion}<td>
       `;
       señaList.appendChild(row);
     });

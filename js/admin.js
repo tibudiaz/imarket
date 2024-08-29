@@ -143,6 +143,24 @@ async function loadProducts() {
     // Renderizar los productos en la tabla
     products.forEach((data) => {
       const row = document.createElement('tr');
+
+      // Generar el contenido HTML para la anotación
+      let anotacionHtml = '';
+      if (data.anotacion && data.anotacion.trim() !== '') {
+        // Mostrar la anotación existente y botones de editar y borrar
+        anotacionHtml = `
+          <div id="anotacion-texto-${data.id}" class="mb-2">${data.anotacion}</div>
+          <button class="btn btn-info btn-sm editar-btn" data-id="${data.id}">Editar</button>
+          <button class="btn btn-danger btn-sm borrar-btn" data-id="${data.id}">Borrar</button>
+        `;
+      } else {
+        // Mostrar un cuadro de texto para agregar una nueva anotación
+        anotacionHtml = `
+          <textarea id="anotacion-${data.id}" rows="2" placeholder="Agregar anotación"></textarea>
+          <button class="btn btn-primary btn-sm mt-1 guardar-btn" data-id="${data.id}">Guardar</button>
+        `;
+      }
+
       row.innerHTML = `
         <td>${data.nombre}</td>
         <td>${data.fechaIngreso}</td>
@@ -155,14 +173,40 @@ async function loadProducts() {
           <button class="btn btn-warning btn-sm" onclick="senarProducto('${data.id}')">Señar</button>
           <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
         </td>
+        <td id="anotacion-col-${data.id}">${anotacionHtml}</td> <!-- Nueva columna para anotaciones -->
       `;
+      
       productList.appendChild(row);
     });
+
+    // Agregar eventos a los botones de anotaciones
+    document.querySelectorAll('.guardar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        guardarAnotacion(productId);
+      });
+    });
+
+    document.querySelectorAll('.editar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        editarAnotacion(productId);
+      });
+    });
+
+    document.querySelectorAll('.borrar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        borrarAnotacion(productId);
+      });
+    });
+
   } catch (e) {
     console.error('Error al cargar productos: ', e);
     alert('Hubo un error al cargar la lista de productos');
   }
 }
+
 
 // Cargar productos vendidos desde Firestore y ordenarlos por fecha de venta
 async function loadSoldProducts() {
@@ -228,13 +272,31 @@ async function loadSeñados() {
     // Renderizar los productos señalados en la tabla
     señalados.forEach((data) => {
       const row = document.createElement('tr');
+
+      // Generar el contenido HTML para la anotación
+      let anotacionHtml = '';
+      if (data.anotacion && data.anotacion.trim() !== '') {
+        // Mostrar la anotación existente y botones de editar y borrar
+        anotacionHtml = `
+          <div id="anotacion-texto-${data.id}" class="mb-2">${data.anotacion}</div>
+          <button class="btn btn-info btn-sm editar-btn" data-id="${data.id}">Editar</button>
+          <button class="btn btn-danger btn-sm borrar-btn" data-id="${data.id}">Borrar</button>
+        `;
+      } else {
+        // Mostrar un cuadro de texto para agregar una nueva anotación
+        anotacionHtml = `
+          <textarea id="anotacion-${data.id}" rows="2" placeholder="Agregar anotación"></textarea>
+          <button class="btn btn-primary btn-sm mt-1 guardar-btn" data-id="${data.id}">Guardar</button>
+        `;
+      }
+
       row.innerHTML = `
         <td>${data.nombre}</td>
         <td>${data.fechaIngreso}</td>
         <td>${data.proveedor || 'No disponible'}</td>
         <td>${data.precioCompra}</td>
         <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
-        <td>${data.montoSeña || 'No disponible'} </td>
+        <td>${data.montoSeña || 'No disponible'}</td>
         <td>${data.fechaSeña || 'No disponible'}</td> <!-- Mostrar fecha de seña -->
         <td>${data.imei}</td>
         <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
@@ -243,12 +305,94 @@ async function loadSeñados() {
           <button class="btn btn-warning btn-sm" onclick="cancelarSeña('${data.id}')">Cancelar Seña</button>
           <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
         </td>
+        <td id="anotacion-col-${data.id}">${anotacionHtml}</td> <!-- Nueva columna para anotaciones -->
       `;
+
       señaList.appendChild(row);
     });
+
+    // Agregar eventos a los botones de anotaciones
+    document.querySelectorAll('.guardar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        guardarAnotacion(productId);
+      });
+    });
+
+    document.querySelectorAll('.editar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        editarAnotacion(productId);
+      });
+    });
+
+    document.querySelectorAll('.borrar-btn').forEach(button => {
+      button.addEventListener('click', (event) => {
+        const productId = event.target.getAttribute('data-id');
+        borrarAnotacion(productId);
+      });
+    });
+
   } catch (e) {
     console.error('Error al cargar productos señalados: ', e);
     alert('Hubo un error al cargar la lista de productos señalados');
+  }
+}
+
+// Nueva función para guardar la anotación en Firestore
+async function guardarAnotacion(productId) {
+  try {
+    const db = getFirestore();  // Asegúrate de obtener la instancia de Firestore
+    const productRef = doc(db, "productos", productId);
+    const anotacion = document.getElementById(`anotacion-${productId}`).value;
+
+    // Actualizar el documento con la nueva anotación
+    await updateDoc(productRef, {
+      anotacion: anotacion
+    });
+
+    alert('Anotación guardada correctamente');
+    // Actualizar la interfaz después de guardar
+    loadSeñados();
+  } catch (error) {
+    console.error('Error al guardar la anotación: ', error);
+    alert('Hubo un error al guardar la anotación');
+  }
+}
+
+// Función para editar la anotación
+function editarAnotacion(productId) {
+  const anotacionTexto = document.getElementById(`anotacion-texto-${productId}`);
+  const anotacionColumna = document.getElementById(`anotacion-col-${productId}`);
+  
+  anotacionColumna.innerHTML = `
+    <textarea id="anotacion-${productId}" rows="2">${anotacionTexto.innerText}</textarea>
+    <button class="btn btn-primary btn-sm mt-1 guardar-btn" data-id="${productId}">Guardar</button>
+  `;
+
+  // Agregar evento al nuevo botón de guardar creado dinámicamente
+  document.querySelector(`#anotacion-col-${productId} .guardar-btn`).addEventListener('click', (event) => {
+    guardarAnotacion(productId);
+  });
+}
+
+// Función para borrar la anotación
+async function borrarAnotacion(productId) {
+  try {
+    const db = getFirestore();  // Asegúrate de obtener la instancia de Firestore
+    const productRef = doc(db, "productos", productId);
+
+    // Borrar la anotación del producto
+    await updateDoc(productRef, {
+      anotacion: ""
+    });
+
+    alert('Anotación borrada correctamente');
+    // Actualizar la interfaz después de borrar
+    loadSeñados();
+  } catch (error) {
+    console.error('Error al borrar la anotación: ', error);
+    alert('Hubo un error al borrar la anotación');
   }
 }
 
