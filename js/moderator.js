@@ -21,7 +21,12 @@ const auth = getAuth(app);
 
 // Verificar el estado de autenticación
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
+  if (user) {
+    console.log('Usuario autenticado:', user.email);
+    loadAvailableProducts(); // Cargar productos disponibles al inicio
+    loadSoldProducts(); // Cargar productos vendidos al inicio
+    loadSeñados(); // Cargar productos señalados al inicio
+  } else {
     alert('Debes estar autenticado para acceder a esta página.');
     window.location.href = 'index.html'; // Redirigir al login
   }
@@ -60,7 +65,7 @@ async function loadAvailableProducts() {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      if (!data.sold) {
+      if (!data.señado & !data.sold) {
         // Agregar cada producto disponible al array
         availableProducts.push({ id: doc.id, ...data });
       }
@@ -201,8 +206,9 @@ async function loadSeñados() {
       row.innerHTML = `
         <td>${data.nombre}</td>
         <td>${data.fechaIngreso}</td>
-        <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
         <td>${data.fechaSeña || 'No disponible'}</td> <!-- Mostrar fecha de seña -->
+        <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
+        <td>${data.montoSeña || 'No disponible'}</td>
         <td>${data.imei}</td>
         <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
         <td>

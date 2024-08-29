@@ -234,6 +234,7 @@ async function loadSeñados() {
         <td>${data.proveedor || 'No disponible'}</td>
         <td>${data.precioCompra}</td>
         <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
+        <td>${data.montoSeña || 'No disponible'} </td>
         <td>${data.fechaSeña || 'No disponible'}</td> <!-- Mostrar fecha de seña -->
         <td>${data.imei}</td>
         <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
