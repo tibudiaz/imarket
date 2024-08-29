@@ -25,6 +25,7 @@ onAuthStateChanged(auth, (user) => {
     console.log('Usuario autenticado:', user.email);
     loadProducts(); // Cargar productos disponibles al inicio
     loadSoldProducts(); // Cargar productos vendidos al inicio
+    loadSeñados(); // Cargar productos señalados al inicio
   } else {
     alert('Debes estar autenticado para acceder a esta página.');
     window.location.href = 'index.html'; // Redirigir al login
@@ -48,13 +49,15 @@ document.getElementById('productForm').addEventListener('submit', async function
       proveedor: productProveedor,
       precioCompra: purchasePrice,
       imei: imei,
-      sold: false
+      sold: false,
+      señalado: false // Inicialmente, los productos no están señalados
     });
 
     alert('Producto cargado exitosamente');
     document.getElementById('productForm').reset();
     loadProducts(); // Actualizar la lista de productos
     loadSoldProducts(); // Actualizar la lista de productos vendidos
+    loadSeñados(); // Actualizar la lista de productos señalados
   } catch (e) {
     console.error('Error al agregar producto: ', e);
     alert('Hubo un error al cargar el producto');
@@ -66,12 +69,14 @@ document.getElementById('loadTabButton').addEventListener('click', function() {
   document.getElementById('loadTab').classList.add('active');
   document.getElementById('viewTab').classList.remove('active');
   document.getElementById('soldTab').classList.remove('active');
+  document.getElementById('señaTab').classList.remove('active');
 });
 
 document.getElementById('viewTabButton').addEventListener('click', function() {
   document.getElementById('loadTab').classList.remove('active');
   document.getElementById('viewTab').classList.add('active');
   document.getElementById('soldTab').classList.remove('active');
+  document.getElementById('señaTab').classList.remove('active');
   loadProducts(); // Cargar productos disponibles al cambiar a la pestaña de vista
 });
 
@@ -79,7 +84,16 @@ document.getElementById('soldTabButton').addEventListener('click', function() {
   document.getElementById('loadTab').classList.remove('active');
   document.getElementById('viewTab').classList.remove('active');
   document.getElementById('soldTab').classList.add('active');
+  document.getElementById('señaTab').classList.remove('active');
   loadSoldProducts(); // Cargar productos vendidos al cambiar a la pestaña de vendidos
+});
+
+document.getElementById('señaTabButton').addEventListener('click', function() {
+  document.getElementById('loadTab').classList.remove('active');
+  document.getElementById('viewTab').classList.remove('active');
+  document.getElementById('soldTab').classList.remove('active');
+  document.getElementById('señaTab').classList.add('active');
+  loadSeñados(); // Cargar productos señalados al cambiar a la pestaña de señados
 });
 
 // Calcular el total del valor de compra de los productos no vendidos
@@ -107,7 +121,7 @@ document.getElementById('calculateTotalButton').addEventListener('click', async 
   }
 });
 
-// Cargar productos desde Firestore
+// Cargar productos disponibles desde Firestore
 async function loadProducts() {
   try {
     const querySnapshot = await getDocs(collection(db, "productos"));
@@ -118,7 +132,7 @@ async function loadProducts() {
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      if (!data.sold) {
+      if (!data.sold && !data.señado) { // Excluir productos vendidos y señalados
         products.push({ id: doc.id, ...data });
       }
     });
@@ -138,6 +152,7 @@ async function loadProducts() {
         <td>
           <button class="btn btn-success btn-sm" onclick="markAsSold('${data.id}')">Marcar como Vendido</button>
           <button class="btn btn-info btn-sm" onclick="editProduct('${data.id}')">Editar</button>
+          <button class="btn btn-warning btn-sm" onclick="senarProducto('${data.id}')">Señar</button>
           <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
         </td>
       `;
@@ -189,7 +204,83 @@ async function loadSoldProducts() {
   }
 }
 
-// Marcar un producto como vendido
+// Cargar productos señalados desde Firestore y mostrarlos en la pestaña de productos señalados
+async function loadSeñados() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "productos"));
+    const señaList = document.getElementById('señaList');
+    señaList.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos productos
+
+    let señalados = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.señado && !data.sold) { // Excluir productos vendidos y solo incluir señalados
+        señalados.push({ id: doc.id, ...data });
+      }
+    });
+
+    // Ordenar los productos señalados por fecha de seña
+    señalados.sort((a, b) => new Date(a.fechaSeña) - new Date(b.fechaSeña));
+
+    console.log("Productos señalados a mostrar:", señalados); // Depuración: Mostrar la lista filtrada
+
+    // Renderizar los productos señalados en la tabla
+    señalados.forEach((data) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${data.nombre}</td>
+        <td>${data.fechaIngreso}</td>
+        <td>${data.proveedor || 'No disponible'}</td>
+        <td>${data.precioCompra}</td>
+        <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
+        <td>${data.fechaSeña || 'No disponible'}</td> <!-- Mostrar fecha de seña -->
+        <td>${data.imei}</td>
+        <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
+        <td>
+          <button class="btn btn-success btn-sm" onclick="markAsSold('${data.id}')">Marcar como Vendido</button>
+          <button class="btn btn-warning btn-sm" onclick="cancelarSeña('${data.id}')">Cancelar Seña</button>
+          <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
+        </td>
+      `;
+      señaList.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Error al cargar productos señalados: ', e);
+    alert('Hubo un error al cargar la lista de productos señalados');
+  }
+}
+
+
+// Función para cancelar la seña de un producto
+window.cancelarSeña = async function(productId) {
+  if (confirm('¿Estás seguro de que quieres cancelar la seña de este producto?')) {
+    try {
+      const productRef = doc(db, "productos", productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        await updateDoc(productRef, {
+          señado: false,
+          comprador: null,
+          precioVenta: null,
+          fechaSeña: null
+        });
+        
+        alert('Seña cancelada correctamente');
+        loadSeñados(); // Actualizar la lista de productos señalados
+        loadProducts(); // Actualizar la lista de productos disponibles
+      } else {
+        alert('Producto no encontrado');
+      }
+    } catch (e) {
+      console.error('Error al cancelar la seña: ', e);
+      alert('Hubo un error al cancelar la seña');
+    }
+  }
+}
+
+//marcar como vendido
 window.markAsSold = async function(productId) {
   try {
     const productRef = doc(db, "productos", productId);
@@ -216,6 +307,7 @@ window.markAsSold = async function(productId) {
     alert('Hubo un error al marcar el producto como vendido');
   }
 }
+
 
 // Copiar IMEI al portapapeles
 window.copyIMEI = function(imei, button) {

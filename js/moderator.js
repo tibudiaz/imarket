@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 // Configuración de Firebase
@@ -31,13 +31,21 @@ onAuthStateChanged(auth, (user) => {
 document.getElementById('availableTabButton').addEventListener('click', function() {
   document.getElementById('availableTab').classList.add('active');
   document.getElementById('soldTab').classList.remove('active');
+  document.getElementById('señaTab').classList.remove('active');
   loadAvailableProducts(); // Cargar productos disponibles al cambiar a la pestaña de disponibles
 });
 
 document.getElementById('soldTabButton').addEventListener('click', function() {
   document.getElementById('availableTab').classList.remove('active');
   document.getElementById('soldTab').classList.add('active');
+  document.getElementById('señaTab').classList.remove('active');
   loadSoldProducts(); // Cargar productos vendidos al cambiar a la pestaña de vendidos
+});
+document.getElementById('señaTabButton').addEventListener('click', function() {
+  document.getElementById('availableTab').classList.remove('active');
+  document.getElementById('soldTab').classList.remove('active');
+  document.getElementById('señaTab').classList.add('active');
+  loadSeñados(); // Cargar productos disponibles al cambiar a la pestaña de disponibles
 });
 
 // Cargar productos disponibles desde Firestore
@@ -70,6 +78,7 @@ async function loadAvailableProducts() {
         <td>${product.imei}</td>
         <td>
           <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${product.id}')">Marcar como Vendido</button>
+          <button class="btn btn-warning btn-sm" onclick="senarProducto('${product.id}')">Señar</button>
           <button class="btn btn-secondary btn-sm" onclick="copyImei(this, '${product.imei}')">Copiar IMEI</button>
         </td>
       `;
@@ -165,6 +174,85 @@ document.getElementById('markAsSoldForm').addEventListener('submit', async funct
   }
 });
 
+// Cargar productos señalados desde Firestore y mostrarlos en la pestaña de productos señalados
+async function loadSeñados() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "productos"));
+    const señaList = document.getElementById('señaList');
+    señaList.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos productos
+
+    let señalados = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.señado && !data.sold) { // Excluir productos vendidos y solo incluir señalados
+        señalados.push({ id: doc.id, ...data });
+      }
+    });
+
+    // Ordenar los productos señalados por fecha de seña
+    señalados.sort((a, b) => new Date(a.fechaSeña) - new Date(b.fechaSeña));
+
+    console.log("Productos señalados a mostrar:", señalados); // Depuración: Mostrar la lista filtrada
+
+    // Renderizar los productos señalados en la tabla
+    señalados.forEach((data) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${data.nombre}</td>
+        <td>${data.fechaIngreso}</td>
+        <td>${data.precioVenta || 'No disponible'}</td> <!-- Mostrar precio de seña -->
+        <td>${data.fechaSeña || 'No disponible'}</td> <!-- Mostrar fecha de seña -->
+        <td>${data.imei}</td>
+        <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
+        <td>
+          <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${data.id}')">Marcar como Vendido</button>
+          <button class="btn btn-warning btn-sm" onclick="cancelarSeña('${data.id}')">Cancelar Seña</button>
+          <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
+        </td>
+      `;
+      señaList.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Error al cargar productos señalados: ', e);
+    alert('Hubo un error al cargar la lista de productos señalados');
+  }
+}
+
+
+// Función para cancelar la seña de un producto
+window.cancelarSeña = async function(productId) {
+  if (confirm('¿Estás seguro de que quieres cancelar la seña de este producto?')) {
+    try {
+      const productRef = doc(db, "productos", productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        await updateDoc(productRef, {
+          señado: false,
+          comprador: null,
+          precioVenta: null,
+          fechaSeña: null
+        });
+        
+        alert('Seña cancelada correctamente');
+        loadSeñados(); // Actualizar la lista de productos señalados
+        loadAvailableProducts();// Actualizar la lista de productos disponibles
+      } else {
+        alert('Producto no encontrado');
+      }
+    } catch (e) {
+      console.error('Error al cancelar la seña: ', e);
+      alert('Hubo un error al cancelar la seña');
+    }
+  }
+}
+
+
+
+
+
+
 // Función para copiar el IMEI al portapapeles y mostrar "Copiado" en el botón por 2 segundos
 window.copyImei = function(button, imei) {
   const tempInput = document.createElement('input');
@@ -181,5 +269,17 @@ window.copyImei = function(button, imei) {
   }, 2000);
 }
 
+window.copyIMEI = function(imei, button) {
+  navigator.clipboard.writeText(imei).then(() => {
+    const originalText = button.innerText;
+    button.innerText = 'Copiado';
+    setTimeout(() => {
+      button.innerText = originalText;
+    }, 2000);
+  }).catch((e) => {
+    console.error('Error al copiar IMEI: ', e);
+    alert('Hubo un error al copiar el IMEI');
+  });
+}
 setInterval(loadAvailableProducts, 300000);
 
