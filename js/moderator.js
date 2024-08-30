@@ -81,12 +81,12 @@ async function loadAvailableProducts() {
         <td>${product.nombre}</td>
         <td>${product.fechaIngreso}</td>
         <td>${product.imei}</td>
+        <td>${product.anotacion || ''}</td>
         <td>
           <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${product.id}')">Marcar como Vendido</button>
           <button class="btn btn-warning btn-sm" onclick="senarProducto('${product.id}')">Señar</button>
           <button class="btn btn-secondary btn-sm" onclick="copyImei(this, '${product.imei}')">Copiar IMEI</button>
         </td>
-        <td>${product.anotacion || ''}</td>
       `;
       availableProductList.appendChild(row);
     });
@@ -212,12 +212,12 @@ async function loadSeñados() {
         <td>${data.montoSeña || 'No disponible'}</td>
         <td>${data.imei}</td>
         <td>${data.comprador || 'No disponible'}</td> <!-- Mostrar nombre del cliente -->
+        <td>${data.anotacion}<td>
         <td>
           <button class="btn btn-success btn-sm" onclick="showMarkAsSoldModal('${data.id}')">Marcar como Vendido</button>
           <button class="btn btn-warning btn-sm" onclick="cancelarSeña('${data.id}')">Cancelar Seña</button>
           <button class="btn btn-secondary btn-sm" onclick="copyIMEI('${data.imei}', this)">Copiar IMEI</button>
         </td>
-        <td>${data.anotacion}<td>
       `;
       señaList.appendChild(row);
     });
