@@ -35,10 +35,10 @@
 <body>
     <div class="container mt-4">
         <h1 class="mb-4">Panel de Moderador - Productos</h1>
-        <div class="tabs mb-4">
-            <button id="availableTabButton" class="btn btn-primary">Productos Disponibles</button>
-            <button id="señaTabButton" class="btn btn-secondary">Ver Productos Señados</button>
-            <button id="soldTabButton" class="btn btn-success">Productos Vendidos</button>
+        <div class="tabs mb-4 d-flex">
+            <button id="availableTabButton" class="btn btn-success">Productos Disponibles</button>
+            <button id="señaTabButton" class="btn btn-warning">Ver Productos Señados</button>
+            <button id="soldTabButton" class="btn btn-secondary">Productos Vendidos</button>
         </div>
 
         <div id="availableTab" class="tab-content active">
@@ -49,8 +49,8 @@
                         <th>Nombre</th>
                         <th>Fecha de Ingreso</th>
                         <th>IMEI</th>
-                        <th>Acciones</th>
                         <th>Anotaciones</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="availableProductList">
@@ -89,8 +89,9 @@
                         <th>Monto Seña</th>
                         <th>IMEI</th>
                         <th>Comprador</th>
-                        <th>Acciones</th>
                         <th>Anotaciones</th>
+                        <br>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="señaList">
